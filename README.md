@@ -1,6 +1,3 @@
-# Unofficial-Twitter-Data-Miner
-Script that scrape twitter without twitter API key and save result as csv
-
 ## Information
 This is a tools to scrape twitter public data and convert it to csv so you can process it right away using pandas or any. This script using third party website so you dont need to provide twitter API. Scrapped data keys are provided here:
 
