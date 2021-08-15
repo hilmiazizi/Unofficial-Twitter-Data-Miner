@@ -11,7 +11,7 @@ Result example loaded in pandas:
 ## Installation 
 Cloning project
 
-`git clone https://github.com/hilmiazizi/twitter-data-miner.git`
+`git clone https://github.com/hilmiazizi/Unofficial-Twitter-Data-Miner.git`
 
 
 Installing required module
