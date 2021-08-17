@@ -2,3 +2,4 @@ bs4
 langdetect
 urlextract
 requests
+from textblob import TextBlob
