@@ -96,7 +96,7 @@ def Extractor(response):
 					tweet_like = int(tweet_like.replace(',',''))
 
 		tweet_username = scraper.find('a', class_='username').get_text()
-		tweet_fullname = scraper.find('a', class_='fullname').get_text()
+		tweet_fullname = scraper.find('a', class_='fullname').get_text().replace(',',' ')
 
 		
 		tweet_content = scraper.find('div', class_='tweet-content media-body').get_text().replace(',','.').replace('\n','. ')
