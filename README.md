@@ -31,4 +31,4 @@ This command will give you 5000 tweets within last 30 days and with english only
 
 
 ## Credit
-[https://nitter.pussthecat.org/](https://nitter.pussthecat.org/)
+Third Party Twitter Website : [https://nitter.pussthecat.org/](https://nitter.pussthecat.org/)
