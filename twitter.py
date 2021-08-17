@@ -104,6 +104,9 @@ def Extractor(response):
 			tweet_content = TweerCleaner(tweet_content)
 		else:
 			tweet_content = tweet_content
+		tweet_content = tweet_content.replace('  ',' ')
+		tweet_content = tweet_content.replace('  ',' ')
+		tweet_content = tweet_content.replace('  ',' ')
 		try:
 			if lang_detect == 'langdetect':
 				tweet_lang = detect(tweet_content)
@@ -112,7 +115,9 @@ def Extractor(response):
 				tweet_lang = blob.detect_language()
 			if tweet_lang != lang:
 				continue
-		except:
+		except Exception as e:
+			print('TextBlob Block, please use VPN')
+			exit()
 			continue
 		extractor = URLExtract()
 		urls = extractor.find_urls(tweet_content)
