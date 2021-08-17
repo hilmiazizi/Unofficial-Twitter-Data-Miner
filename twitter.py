@@ -3,12 +3,24 @@ import requests
 import re
 from bs4 import BeautifulSoup
 import os
+from textblob import TextBlob
 from langdetect import detect
 import argparse
 import datetime
 from urlextract import URLExtract
 os.system('clear')
 counter = 0
+
+def TweerCleaner(tweet):
+	temp = tweet.lower()
+	temp = re.sub("'", "", temp) 
+	temp = re.sub("@[A-Za-z0-9_]+","", temp)
+	temp = re.sub("#[A-Za-z0-9_]+","", temp)
+	temp = re.sub(r'http\S+', '', temp)
+	temp = re.sub('[()!?]', ' ', temp)
+	temp = re.sub('\[.*?\]',' ', temp)
+	temp = re.sub("[^a-z0-9]"," ", temp)
+	return temp
 
 def DataWriter(datas):
 	global today
@@ -32,6 +44,9 @@ def Extractor(response):
 	global period_datas
 	global counter
 	global lang
+	global lang_detect
+	global noreply
+	global clean
 	soup = BeautifulSoup(response, 'html.parser')
 	content = soup.find_all('div', class_='timeline-item')
 	for datas in content:
@@ -83,14 +98,20 @@ def Extractor(response):
 		tweet_username = scraper.find('a', class_='username').get_text()
 		tweet_fullname = scraper.find('a', class_='fullname').get_text()
 
-
+		
 		tweet_content = scraper.find('div', class_='tweet-content media-body').get_text().replace(',','.').replace('\n','. ')
+		if clean:
+			tweet_content = TweerCleaner(tweet_content)
+		else:
+			tweet_content = tweet_content
 		try:
-			tweet_lang = detect(tweet_content)
+			if lang_detect == 'langdetect':
+				tweet_lang = detect(tweet_content)
+			if lang_detect == 'textblob':
+				blob = TextBlob(tweet_content)
+				tweet_lang = blob.detect_language()
 			if tweet_lang != lang:
 				continue
-			else:
-				counter+=1
 		except:
 			continue
 		extractor = URLExtract()
@@ -105,11 +126,18 @@ def Extractor(response):
 		else:
 			tweet_is_verified = False
 		if 'Replying to' in str(datas):
-			tweet_is_reply = True
+			if noreply:
+				continue
+			else:
+				tweet_is_reply = True
 		else:
 			tweet_is_reply = False
 
-		result = tweet_date+','+tweet_username+','+tweet_fullname+','+str(tweet_is_verified)+','+str(tweet_is_reply)+','+str(has_links)+','+str(tweet_content)+','+str(tweet_comment)+','+str(tweet_retweet)+','+str(tweet_quote)+','+str(tweet_like)
+		counter+=1
+		if noreply:
+			result = tweet_date+','+tweet_username+','+tweet_fullname+','+str(tweet_is_verified)+','+str(has_links)+','+str(tweet_content)+','+str(tweet_comment)+','+str(tweet_retweet)+','+str(tweet_quote)+','+str(tweet_like)
+		else:
+			result = tweet_date+','+tweet_username+','+tweet_fullname+','+str(tweet_is_verified)+','+str(tweet_is_reply)+','+str(has_links)+','+str(tweet_content)+','+str(tweet_comment)+','+str(tweet_retweet)+','+str(tweet_quote)+','+str(tweet_like)
 		DataWriter(result)
 		if max_tweet == counter:
 			return False
@@ -189,19 +217,49 @@ def NextScrape(cursor,keyword):
 # Argument Parser
 #########################################
 parser = argparse.ArgumentParser()
-parser.add_argument('--period', type=int, required=True, help="Tweets period in number, example: 7, will scape tweets from today to 7 days ago")
+parser.add_argument('--period', type=int, required=True, help="Tweets period in number, example: 7, will scape tweets within 7 days")
 parser.add_argument('--keyword', type=str, required=True, help="Keyword, please use quote")
 parser.add_argument('--max', type=int, required=True, help="Maximum tweets scrapped")
 parser.add_argument('--lang', type=str, required=True, help="Language in ISO 639-1 codes, check on https://pypi.org/project/langdetect/")
+parser.add_argument('--noreply', action='store_true', required=False, help="Remove reply tweets")
+parser.add_argument('--textblob', action='store_true', required=False, help="Using TextBlob as language detector")
+parser.add_argument('--langdetect', action='store_true', required=False, help="Using langdetect for language detector")
+parser.add_argument('--clean', action='store_true', required=False, help="Lower tweets, remove mentions, non-alphanumeric characters, punctuations, hashtags & links")
 args = parser.parse_args()
 
-today, period_datas = TimeConfig(args.period)
 keyword = args.keyword
 lang = args.lang
 max_tweet = args.max
+
+
+if args.textblob:
+	lang_detect = 'textblob'
+elif args.langdetect:
+	lang_detect = 'langdetect'
+elif args.langdetect and args.textblob:
+	print('Argument conflict, you must select between textblob or langdetect')
+	exit()
+elif not args.textblob and not args.langdetect:
+	lang_detect = 'langdetect'
+
+if args.noreply:
+	noreply = True
+else:
+	noreply = False
+
+if args.clean:
+	clean = True
+else:
+	clean = False
+
+
+today, period_datas = TimeConfig(args.period)
 file_name = keyword+' - '+today.replace('/','-')+'.csv'
 result = open(file_name,'a+')
-result.write('Tweet Date,Username,Full Name,Verfied,Is Reply,Has Links,Content,Comments,Retweet,Quote,Likes\n')
+if noreply:
+	result.write('Tweet Date,Username,Full Name,Verfied,Has Links,Content,Comments,Retweet,Quote,Likes\n')	
+if not noreply:
+	result.write('Tweet Date,Username,Full Name,Verfied,Is Reply,Has Links,Content,Comments,Retweet,Quote,Likes\n')
 result.close()
 
 print(' '*10+'-*- Twitter Data Miner -*-')
