@@ -19,7 +19,7 @@ Installing required module
 `pip3 install -r requirements.txt `
 
 ## Usage
-![](https://imgur.com/dg6R6Le)
+![](https://i.imgur.com/dg6R6Le.png)
 
 We have language detection option to decide using textblob or langdetect as language detector, textblob having much greater detection but it have rate limit, you can use vpn/tor to bypass it.
 
@@ -28,3 +28,7 @@ We have language detection option to decide using textblob or langdetect as lang
 `python3 twitter.py --period 30 --keyword "South China Sea" --max 5000 --lang en`
 
 This command will give you 5000 tweets within last 30 days and with english only tweets
+
+
+## Credit
+[https://nitter.pussthecat.org/](https://nitter.pussthecat.org/)
