@@ -8,11 +8,16 @@ from langdetect import detect
 import argparse
 import datetime
 from urlextract import URLExtract
+from mysutils.text import remove_urls
 os.system('clear')
 counter = 0
 
 def TweerCleaner(tweet):
 	temp = tweet.lower()
+	extractor = URLExtract()
+	urls = extractor.find_urls(temp)
+	for i in urls:
+		temp = temp.replace(i,'')
 	temp = re.sub("'", "", temp) 
 	temp = re.sub("@[A-Za-z0-9_]+","", temp)
 	temp = re.sub("#[A-Za-z0-9_]+","", temp)
@@ -20,6 +25,7 @@ def TweerCleaner(tweet):
 	temp = re.sub('[()!?]', ' ', temp)
 	temp = re.sub('\[.*?\]',' ', temp)
 	temp = re.sub("[^a-z0-9]"," ", temp)
+	temp = ' '.join(temp.split())
 	return temp
 
 def DataWriter(datas):
@@ -99,14 +105,11 @@ def Extractor(response):
 		tweet_fullname = scraper.find('a', class_='fullname').get_text().replace(',',' ')
 
 		
-		tweet_content = scraper.find('div', class_='tweet-content media-body').get_text().replace(',','.').replace('\n','. ')
+		tweet_content = scraper.find('div', class_='tweet-content media-body').get_text()
 		if clean:
 			tweet_content = TweerCleaner(tweet_content)
 		else:
 			tweet_content = tweet_content
-		tweet_content = tweet_content.replace('  ',' ')
-		tweet_content = tweet_content.replace('  ',' ')
-		tweet_content = tweet_content.replace('  ',' ')
 		try:
 			if lang_detect == 'langdetect':
 				tweet_lang = detect(tweet_content)
