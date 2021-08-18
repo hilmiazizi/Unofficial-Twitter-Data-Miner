@@ -3,3 +3,4 @@ langdetect
 urlextract
 requests
 textblob
+mysmallutils
