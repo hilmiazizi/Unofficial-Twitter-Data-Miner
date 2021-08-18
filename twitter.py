@@ -244,7 +244,6 @@ def NextScrape(cursor,keyword,url):
 		cursors = re.search('cursor=scroll%3A(.*)">Loa', str(response.text)).group(1)
 		NextScrape(cursors,keyword,url)
 	except Exception as e:
-		print(3)
 		if 'rate limited.' in response.text:
 			NextScrape(cursor,keyword,url)
 		else:
