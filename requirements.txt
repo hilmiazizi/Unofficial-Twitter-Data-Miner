@@ -4,3 +4,4 @@ urlextract
 requests
 textblob
 mysmallutils
+tqdm
