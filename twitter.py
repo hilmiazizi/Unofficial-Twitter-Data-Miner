@@ -3,15 +3,20 @@ import requests
 import re
 from bs4 import BeautifulSoup
 import os
+import tqdm
+import time
 from textblob import TextBlob
 from langdetect import detect
 import argparse
 import datetime
 from urlextract import URLExtract
+import random
 from mysutils.text import remove_urls
 os.system('clear')
 counter = 0
+usernames = []
 
+domain = ['nitter.net','nitter.42l.fr','nitter.pussthecat.org','tweet.lambda.dance','nitter.eu','nitter.namazso.eu','nitter.mailstation.de','nitter.database.red','nitter.bcow.xyz','bird.nogafam.es','twitter.censors.us','nitter.grimneko.de','nitter.koyu.space']
 def TweerCleaner(tweet):
 	temp = tweet.lower()
 	extractor = URLExtract()
@@ -32,9 +37,14 @@ def DataWriter(datas):
 	global today
 	global keyword
 	file_name = keyword+' - '+today.replace('/','-')+'.csv'
-	result = open(file_name,'a+')
-	result.write(datas+"\n")
-	result.close()
+	try:	
+		result = open(file_name,'a+')
+		result.write(datas+"\n")
+		result.close()
+	except:
+		print(datas)
+		exit()
+
 
 def TimeConfig(n_day):
 	period_datas = []
@@ -46,6 +56,8 @@ def TimeConfig(n_day):
 
 
 def Extractor(response):
+	global usernames
+	global pbar
 	global max_tweet
 	global period_datas
 	global counter
@@ -102,6 +114,10 @@ def Extractor(response):
 					tweet_like = int(tweet_like.replace(',',''))
 
 		tweet_username = scraper.find('a', class_='username').get_text()
+		if tweet_username in usernames:
+			continue
+		else:
+			usernames.append(tweet_username)
 		tweet_fullname = scraper.find('a', class_='fullname').get_text().replace(',',' ')
 
 		
@@ -119,6 +135,8 @@ def Extractor(response):
 			if tweet_lang != lang:
 				continue
 		except Exception as e:
+			if 'features in te' in str(e):
+				continue
 			print('TextBlob Block, please use VPN')
 			exit()
 			continue
@@ -140,7 +158,7 @@ def Extractor(response):
 				tweet_is_reply = True
 		else:
 			tweet_is_reply = False
-
+		pbar.update(1)
 		counter+=1
 		if noreply:
 			result = tweet_date+','+tweet_username+','+tweet_fullname+','+str(tweet_is_verified)+','+str(has_links)+','+str(tweet_content)+','+str(tweet_comment)+','+str(tweet_retweet)+','+str(tweet_quote)+','+str(tweet_like)
@@ -158,8 +176,10 @@ def Extractor(response):
 		return True
 
 def ScrapeFirst(keyword):
+	global domain
+	url = random.choice(domain)
 	headers = {
-	    'Host': 'nitter.pussthecat.org',
+	    'Host': url,
 	    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0',
 	    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 	    'Accept-Language': 'id,en-US;q=0.7,en;q=0.3',
@@ -178,20 +198,27 @@ def ScrapeFirst(keyword):
 	    ('q', keyword),
 	)
 
-	response = requests.get('https://nitter.pussthecat.org/search', headers=headers, params=params)
+	response = requests.get('https://'+url+'/search', headers=headers, params=params)
 	status = Extractor(response.text)
 	if not status:
 		return
 	try:
 		cursor = re.search('cursor=scroll%3A(.*)">Loa', response.text).group(1)
-		NextScrape(cursor,keyword)
+		NextScrape(cursor,keyword,url)
 	except Exception as e:
-		print(str(e))
-		return
+		if 'rate limited.' in response.text:
+			url = random.choice(domain)
+			NextScrape(cursor,keyword,url)
+		else:
+			print('Error')
+			f = open('log.html', 'w')
+			f.write(response.text)
+			return
 
-def NextScrape(cursor,keyword):
+def NextScrape(cursor,keyword,url):
+	global domain
 	headers = {
-	    'Host': 'nitter.pussthecat.org',
+	    'Host': url,
 	    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0',
 	    'Accept': '*/*',
 	    'Accept-Language': 'id,en-US;q=0.7,en;q=0.3',
@@ -209,16 +236,22 @@ def NextScrape(cursor,keyword):
 	    ('scroll', 'true'),
 	)
 
-	response = requests.get('https://nitter.pussthecat.org/search', headers=headers, params=params)
+	response = requests.get('https://'+url+'/search', headers=headers, params=params)
 	status = Extractor(response.text)
 	if not status:
 		return
 	try:
-		cursor = re.search('cursor=scroll%3A(.*)">Loa', str(response.text)).group(1)
-		NextScrape(cursor,keyword)
+		cursors = re.search('cursor=scroll%3A(.*)">Loa', str(response.text)).group(1)
+		NextScrape(cursors,keyword,url)
 	except Exception as e:
-		print(str(e))
-		return
+		print(3)
+		if 'rate limited.' in response.text:
+			NextScrape(cursor,keyword,url)
+		else:
+			print('Error')
+			f = open('log.html', 'w')
+			f.write(response.text)
+			return
 
 
 #########################################
@@ -270,12 +303,13 @@ if not noreply:
 	result.write('Tweet Date,Username,Full Name,Verfied,Is Reply,Has Links,Content,Comments,Retweet,Quote,Likes\n')
 result.close()
 
+
 print(' '*10+'-*- Twitter Data Miner -*-')
 print('Keyword\t\t:', args.keyword)
 print('Maximum Tweet\t:', args.max)
 print('Tweets Period\t:',args.period,'day')
-print('Output File\t:', file_name)
-
+print('Output File\t:', file_name+"\n")
+pbar = tqdm.tqdm(total=args.max, desc="Proggress")
 ScrapeFirst(keyword)
-print(' '*16+'-*- Done -*-\n\n')
-
+time.sleep(1)
+#print(' '*16+'-*- Done -*-\n\n')
