@@ -16,7 +16,7 @@ os.system('clear')
 counter = 0
 usernames = []
 
-domain = ['nitter.net','nitter.42l.fr','nitter.pussthecat.org','tweet.lambda.dance','nitter.eu','nitter.namazso.eu','nitter.mailstation.de','nitter.database.red','nitter.bcow.xyz','bird.nogafam.es','twitter.censors.us','nitter.grimneko.de','nitter.koyu.space']
+domain = ['nitter.net','nitter.42l.fr','nitter.pussthecat.org','nitter.eu','nitter.namazso.eu','nitter.mailstation.de','nitter.database.red','nitter.bcow.xyz','twitter.censors.us','nitter.grimneko.de','nitter.koyu.space']
 def TweerCleaner(tweet):
 	temp = tweet.lower()
 	extractor = URLExtract()
